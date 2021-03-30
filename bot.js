@@ -1,10 +1,13 @@
 const Discord = require('discord.js');
 const client = new Discord.Client();
 const config = require('./config.json');
+const { FindMessages } = require('./res/song')
+const { getLastMessage, getContextMessage, limparLista } = require('./modules/play/play')
 require('dotenv').config()
 
 const { MessageEmbed } = require('discord.js');
 const { commandQuery } = require('./modules/commandHandler/commandHandler');
+console.clear()
 
 client.on("ready",() =>{
 console.log(`Bot ativo com ${client.users.cache.size} usuarios em ${client.guilds.cache.size} servidores`);
@@ -20,6 +23,15 @@ client.on("message", async message => {
         await commandQuery(args, comando, message)  
     }
 });
+
+client.on('voiceStateUpdate', async (bot)  => {
+    if(bot.id == '728993532303507556' && !bot.connection){
+        let message = await getContextMessage()
+        let lastMessage = await getLastMessage()
+        await FindMessages(message, lastMessage)
+        await limparLista()
+    }
+})
 
 client.on('guildMemberAdd', member => {
     if(member.user.bot) return

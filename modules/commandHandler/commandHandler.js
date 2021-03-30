@@ -11,16 +11,25 @@ const execute = async (comando, args, module, message) => {
     var dir = await fs.readdir(`modules/${module}`)
     dir.forEach(fileName => {
         if(fileName == comando + ".js"){
-            if(comando == 'help'){
-                help.help(message)
-            }else if(comando == 'play'){
-                play.play(args, message)
-            }else if(comando == 'skip'){
-                skip.skip(message)
-            }else if(comando == 'stop'){
-                stop.stop(message)
-            }else if(comando == 'queue'){
-                queue.queue(message)
+            switch (comando) {
+                case 'help':
+                    help.help(message)
+                    break;
+                case 'play':
+                    play.play(args, message)
+                    break;
+                case 'skip':
+                    skip.skip(message)
+                    break;
+                case 'stop':
+                    stop.stop(message)
+                    break;
+                case 'queue':
+                    queue.queue(message)
+                    break;
+                default:
+                    message.channel.send("Comando não existe")
+                    break;
             }
         }
     });
@@ -36,9 +45,9 @@ const commandQuery = async (args, comando, message) => {
           commands.forEach(com => {
             if(com == comando){
                 execute(comando, args, element, message)
-          }
+            }
         })
-      })
+    })
 }
 
 module.exports = {

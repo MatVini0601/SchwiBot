@@ -1,148 +1,85 @@
-const { client, config, Discord} = require('../../bot')
+const { client} = require('../../bot')
 const youtube = require('ytdl-core');
-const { MessageEmbed } = require('discord.js');
+const { SongArgumentError,
+        NonValidateUrl,
+        NotInVoiceChannel,
+        NowPlaying, 
+        NextSong,
+        Disconnect,
+        AddToQueue,
+        FindMessages } = require("../../res/song");
 
 var servers = {}
 let connectionParameter = null
-let lastMessage = null
+let lastMessage = []
+let msg = ''
 
 const play = async (args, message) => {
     const musica = args.pop();
+    msg = message
     
     async function ValidateSong(musica){
-        let validate = youtube.validateURL(musica)
-        return validate 
+        return youtube.validateURL(musica)
     }
 
-    let validatedSong = await ValidateSong(musica)
-    if(!validatedSong){
-        const SongInfoEmbed = new MessageEmbed()
-        .setColor("#e534eb")
-        .setTitle("❌ Erro ❌")
-        .addField("Música não encontrada:", "Link inválido")
-
-        message.channel.send(SongInfoEmbed)
-        return
-    }
+    const validatedSong = await ValidateSong(musica)
+    if(!musica){ SongArgumentError(message); return }
+    if(!validatedSong){ NonValidateUrl(message); return }
+    if(!message.member.voice.channel){ NotInVoiceChannel(message); return }
     
-    if(!musica){
-        const SongInfoEmbed = new MessageEmbed()
-        .setColor("#e534eb")
-        .setTitle("❌ Erro ❌")
-        .addField("Argumento:", "Schwi precisa de um link para poder tocar alguma música")
+    message.member.voice.channel.join().then(async function(connection){
+        server.queue.push(await GetVideoDetails(musica))
+        server.queue.length <= 1 ? tocar(connection, message) : AddToLista(message)
+        connectionParameter = connection
+    })        
 
-        message.channel.send(SongInfoEmbed)
-        return
-    }
-    if (message.member.voice.channel) {
-        message.member.voice.channel.join()
-        .then(async function(connection){
-            server.queue.push(musica)
-            if(server.queue.length > 1){
-                tocar(connection, message, 2)
-            }else{
-                tocar(connection, message, 1)
-            }
-            connectionParameter = connection
-            
-        })        
-    }else{
-        const SongInfoEmbed = new MessageEmbed()
-        .setColor("#e534eb")
-        .setTitle("❌ Erro ❌")
-        .addField("Conexão:", "Você não está conectado a um canal de voz")
-
-        message.channel.send(SongInfoEmbed)
-        return
+    async function GetVideoDetails(url){
+        let video = await youtube.getInfo(url)
+        let Song = {
+            Url: url,
+            Title: video.videoDetails.title,
+            Author: video.videoDetails.author.name,
+            Likes: video.videoDetails.likes,
+            Deslikes: video.videoDetails.dislikes
+        }
+       return Song; 
     }
 
-    async function tocar(connection, message, versao){
+    async function tocar(connection, message){
         const server = servers[message.guild.id]
 
-        async function GetVideoDetails(url){
-            let video = await youtube.getInfo(url)
-            const songTitle = video.videoDetails.title
-            const author = video.videoDetails.author.name
-            const likes = video.videoDetails.likes
-            const dislikes = video.videoDetails.dislikes
-            return Details = {title: songTitle, autor: author,likes: likes,dislikes: dislikes}
-        }
+        server.dispatcher = connection.play(youtube(server.queue[0].Url, {filter:'audioonly'}));
+        let info = server.queue[0]
 
-        if(versao == 1){
-            server.dispatcher = connection.play(youtube(server.queue[0],{filter:'audioonly'}));
-
-            let info = await GetVideoDetails(server.queue[0])
-            if(info){
-                const SongInfoEmbed = new MessageEmbed()
-                .setColor("#e534eb")
-                .setTitle("🎶 Tocando Agora 🎶")
-                .addField("Título:", info.title)
-                .addField("Canal:", info.autor)
-                .addField("👍Likes:", info.likes, true)
-                .addField("👎Dislikes:", info.dislikes, true);
-
-                if(lastMessage){
-                    lastMessage.delete()
-                    lastMessage = null
-                }
-                
-                await message.channel.send(SongInfoEmbed)
-                lastMessage = message.channel.lastMessage;
-
-            }else{
-                message.channel.send(`Informações não puderam ser obtida devido a algum erro`)
-            }
+        await NowPlaying(message, info)
+        lastMessage.push(message.channel.lastMessageID)
         
-            server.dispatcher.on('finish', async function(){
+        server.dispatcher.on('finish', async function(){
             server.queue.shift()
-                if(server.queue[0]){
-                    const SongInfoEmbed = new MessageEmbed()
-                    .setColor("#e534eb")
-                    .setTitle("🎶 Indo para a próxima música 🎶")
-
-                    if(lastMessage){
-                        lastMessage.delete()
-                        lastMessage = null
-                    }
-                    await message.channel.send(SongInfoEmbed)
-                    tocar(connection, message, 1)
-                    lastMessage = message.channel.lastMessage;
-
-                }else{
-                    const SongInfoEmbed = new MessageEmbed()
-                    .setColor("#e534eb")
-                    .setTitle("Good Bye🖐")
-                    .addField("Desconectando","Nenhuma música detectada na fila")
-
-                    lastMessage.delete()
-                    lastMessage = null
-
-                    message.channel.send(SongInfoEmbed)
-                    connection.disconnect();
-                }
-            }) 
-        }else{
-            let info = await GetVideoDetails(musica)
-            if(info){
-                const SongInfoEmbed = new MessageEmbed()
-                .setColor("#e534eb")
-                .setTitle("🎶 Adicionada à fila de reprodução 🎶")
-                .addField("Título:", info.title)
-                .addField("Canal:", info.autor)
-
-                await message.channel.send(SongInfoEmbed)
-                lastMessage = message.channel.lastMessage;
-                
+            if(server.queue[0]){
+                await NextSong(message)
+                lastMessage.push(message.channel.lastMessageID)
+                tocar(connection, message)
             }else{
-                message.channel.send(`Informações não puderam ser obtida devido a algum erro`)
-            }              
-        }            
+                setTimeout(async function (){ 
+                    FindMessages(message, lastMessage)
+                    limparLista()
+                    Disconnect(message)
+                    connection.disconnect(); 
+                }, 60000)
+            }
+        })   
     }
+
+    async function AddToLista(message){
+        let info = await GetVideoDetails(musica)
+        await AddToQueue(message, info)
+        lastMessage.push(message.channel.lastMessageID)         
+    }     
 
     if(!servers[message.guild.id]) servers[message.guild.id] = {
         queue: []
     }
-
     const server = servers[message.guild.id]    
 };
 
@@ -153,10 +90,23 @@ const getConexao = async () =>{
 const getLastMessage = async () =>{
     return lastMessage
 };
+
+const limparLista = async () => {
+    let server = servers[msg.guild.id]
+    server.queue = []
+    lastMessage = []
+}
+
+const getContextMessage = async () => {
+    return msg
+}
+
 module.exports = {
     play,
     servers,
     client,
     getConexao,
     getLastMessage,
+    getContextMessage,
+    limparLista
 }
