@@ -1,4 +1,4 @@
-const { client} = require('../../bot')
+const { client } = require('../../bot')
 const youtube = require('ytdl-core');
 const { SongArgumentError,
         NonValidateUrl,
@@ -7,12 +7,12 @@ const { SongArgumentError,
         NextSong,
         Disconnect,
         AddToQueue,
-        FindMessages } = require("../../res/song");
+        FindMessages,
+        GetVideoDetails } = require('../../res/song');
 
 var servers = {}
-let connectionParameter = null
-let lastMessage = []
 let msg = ''
+let Timeout;
 
 const play = async (args, message) => {
     const musica = args.pop();
@@ -23,50 +23,45 @@ const play = async (args, message) => {
     }
 
     const validatedSong = await ValidateSong(musica)
-    if(!musica){ SongArgumentError(message); return }
-    if(!validatedSong){ NonValidateUrl(message); return }
-    if(!message.member.voice.channel){ NotInVoiceChannel(message); return }
+    if(!musica){ await SongArgumentError(message); return }
+    if(!validatedSong){ await NonValidateUrl(message); return }
+    if(!message.member.voice.channel){ await NotInVoiceChannel(message); return }
     
     message.member.voice.channel.join().then(async function(connection){
+        connection.voice.setSelfDeaf(true)
         server.queue.push(await GetVideoDetails(musica))
+        server.conexao.push(connection)
         server.queue.length <= 1 ? tocar(connection, message) : AddToLista(message)
         connectionParameter = connection
     })        
 
-    async function GetVideoDetails(url){
-        let video = await youtube.getInfo(url)
-        let Song = {
-            Url: url,
-            Title: video.videoDetails.title,
-            Author: video.videoDetails.author.name,
-            Likes: video.videoDetails.likes,
-            Deslikes: video.videoDetails.dislikes
-        }
-       return Song; 
-    }
-
+   
     async function tocar(connection, message){
+        clearTimeout(Timeout)
         const server = servers[message.guild.id]
-
+        
         server.dispatcher = connection.play(youtube(server.queue[0].Url, {filter:'audioonly'}));
         let info = server.queue[0]
 
-        await NowPlaying(message, info)
-        lastMessage.push(message.channel.lastMessageID)
+        try{await NowPlaying(message, info)}
+        catch(error){console.log(error)}
+        
+        server.lastMessage.push(message.channel.lastMessageID)
         
         server.dispatcher.on('finish', async function(){
             server.queue.shift()
             if(server.queue[0]){
-                await NextSong(message)
-                lastMessage.push(message.channel.lastMessageID)
+                try{await NextSong(message)}
+                catch(error){console.log(error)}
+                server.lastMessage.push(message.channel.lastMessageID)
                 tocar(connection, message)
             }else{
-                setTimeout(async function (){ 
-                    FindMessages(message, lastMessage)
+                Timeout = setTimeout(async function (){ 
+                    FindMessages(message, server.lastMessage)
                     limparLista()
                     Disconnect(message)
-                    connection.disconnect(); 
-                }, 60000)
+                    server.conexao[0].disconnect(); 
+                }, 10000)
             }
         })   
     }
@@ -74,27 +69,21 @@ const play = async (args, message) => {
     async function AddToLista(message){
         let info = await GetVideoDetails(musica)
         await AddToQueue(message, info)
-        lastMessage.push(message.channel.lastMessageID)         
+        server.lastMessage.push(message.channel.lastMessageID)         
     }     
 
     if(!servers[message.guild.id]) servers[message.guild.id] = {
-        queue: []
+        queue: [],
+        lastMessage: [],
+        conexao: []
     }
     const server = servers[message.guild.id]    
 };
 
-const getConexao = async () =>{
-    return connectionParameter
-};
-
-const getLastMessage = async () =>{
-    return lastMessage
-};
-
 const limparLista = async () => {
-    let server = servers[msg.guild.id]
+    const server = servers[msg.guild.id]
     server.queue = []
-    lastMessage = []
+    server.lastMessage = []
 }
 
 const getContextMessage = async () => {
@@ -105,8 +94,6 @@ module.exports = {
     play,
     servers,
     client,
-    getConexao,
-    getLastMessage,
     getContextMessage,
     limparLista
 }

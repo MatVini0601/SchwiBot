@@ -1,4 +1,5 @@
 const { MessageEmbed } = require('discord.js');
+const youtube = require('ytdl-core');
 
 const SongArgumentError = async (message) => {
     const SongInfoEmbed = new MessageEmbed()
@@ -78,22 +79,58 @@ const NoSongPlaying = async (message) => {
     await message.channel.send(SongInfoEmbed)
 }
 
+const NoQueue = async (message) => {
+    const queueList = new MessageEmbed()
+    .setColor('#e534eb')
+    .setTitle("Lista de Reprodução vazia")
+    await message.channel.send(queueList)
+}
+
+const GenerateList = async (message, listInfo) => {
+    const queueList = new MessageEmbed()
+            .setTitle(`Lista de Reprodução\n`)
+            .setColor("#e534eb")
+            .addField(`Servidor: `,message.guild.name, true)
+            .addField('🎶 Músicas 🎶', listInfo);
+        await message.channel.send(queueList)
+}
+
 const FindMessages = async (message, Id) => {
     Id.forEach(async element => {
-        let msg = await message.channel.messages.fetch(element)
-        msg.delete()
+        try {
+            let msg = await message.channel.messages.fetch(element)
+            msg.delete()
+        } catch (error) {
+            message.channel.send("Não foi possível deletar as menssagens")
+        }
     });
 }
+
+async function GetVideoDetails(url){
+    let video = await youtube.getInfo(url)
+    let Song = {
+        Url: url,
+        Title: video.videoDetails.title,
+        Author: video.videoDetails.author.name,
+        Likes: video.videoDetails.likes,
+        Deslikes: video.videoDetails.dislikes
+    }
+   return Song; 
+}
+
 
 module.exports = {
     SongArgumentError,
     NonValidateUrl,
     NotInVoiceChannel,
-    NowPlaying,
     NextSong,
     Disconnect,
     StopDisconnect,
     AddToQueue,
     FindMessages, 
-    NoSongPlaying
+    NoSongPlaying,
+    NowPlaying,
+    GetVideoDetails,
+    NoQueue,
+    GenerateList
 }

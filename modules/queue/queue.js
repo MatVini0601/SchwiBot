@@ -1,8 +1,8 @@
-const { servers} = require("../play/play")
-const { MessageEmbed } = require('discord.js');
+const { servers } = require("../play/play")
+const { NoQueue, GenerateList } = require('../../res/song')
 
 let lista = ''
-let fila = ''
+let fila
 
 async function getLista(sv) {
     fila = ''
@@ -18,17 +18,9 @@ const queue = async (message) => {
     const server = servers[message.guild.id]
     if(message.guild.voice.channel){
         let listInfo = await getLista(server)
-        const queueList = new MessageEmbed()
-            .setTitle("Lista de Reprodução")
-            .setColor("#e534eb")
-            .addField('🎶 Músicas 🎶', listInfo);
-        message.channel.send(queueList)
+        await GenerateList(message, listInfo)
     } else{
-        const queueList = new MessageEmbed()
-        .setColor('#e534eb')
-        .setTitle("Lista de Reprodução vazia")
-
-        message.channel.send(queueList)
+        await NoQueue(message)
     }
 }  
 

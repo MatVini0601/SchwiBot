@@ -1,5 +1,4 @@
 const fs = require('fs').promises;
-const { client, config, Discord, message } = require('../../bot')
 
 const stop = require("../stop/stop");
 const play = require("../play/play")

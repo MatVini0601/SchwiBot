@@ -1,14 +1,10 @@
-const { servers, getConexao, getLastMessage, limparLista} = require("../play/play")
+const { servers, limparLista} = require("../play/play")
 const { FindMessages, 
         NotInVoiceChannel,
         NoSongPlaying,
         StopDisconnect} = require("../../res/song")
 
-let msg = []
-
 const stop = async (message) => {
-    msg = await getLastMessage()
-    const connection = await getConexao()
     const server = servers[message.guild.id]
     
     if(!message.member.voice.channel){
@@ -20,10 +16,10 @@ const stop = async (message) => {
         await NoSongPlaying(message)
         return
     }else{
-        await StopDisconnect(message)
-        FindMessages(message, msg)
-        limparLista()
-        connection.disconnect();
+        await StopDisconnect(message);
+        FindMessages(message, server.lastMessage);
+        limparLista();
+        server.conexao[0].disconnect();
     }
 };
 
