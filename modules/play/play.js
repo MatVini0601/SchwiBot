@@ -26,11 +26,21 @@ const play = async (args, message) => {
     if(!musica){ await SongArgumentError(message); return }
     if(!validatedSong){ await NonValidateUrl(message); return }
     if(!message.member.voice.channel){ await NotInVoiceChannel(message); return }
+    if(!servers[message.guild.id]) servers[message.guild.id] = {
+        queue: [],
+        lastMessage: [],
+        conexao: [],
+        channelID: []
+    }
+    const server = servers[message.guild.id] 
     
     message.member.voice.channel.join().then(async function(connection){
         connection.voice.setSelfDeaf(true)
         server.queue.push(await GetVideoDetails(musica))
         server.conexao.push(connection)
+        if(!server.channelID.includes(message.member.voice.channelID)){
+            server.channelID.push(message.member.voice.channelID)
+        }
         server.queue.length <= 1 ? tocar(connection, message) : AddToLista(message)
         connectionParameter = connection
     })        
@@ -70,20 +80,14 @@ const play = async (args, message) => {
         let info = await GetVideoDetails(musica)
         await AddToQueue(message, info)
         server.lastMessage.push(message.channel.lastMessageID)         
-    }     
-
-    if(!servers[message.guild.id]) servers[message.guild.id] = {
-        queue: [],
-        lastMessage: [],
-        conexao: []
-    }
-    const server = servers[message.guild.id]    
+    }        
 };
 
 const limparLista = async () => {
     const server = servers[msg.guild.id]
     server.queue = []
     server.lastMessage = []
+    server.channelID = []
 }
 
 const getContextMessage = async () => {

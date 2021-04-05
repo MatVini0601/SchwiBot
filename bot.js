@@ -3,6 +3,7 @@ const client = new Discord.Client();
 const config = require('./config.json');
 const { FindMessages } = require('./res/song')
 const { servers, getContextMessage, limparLista } = require('./modules/play/play')
+//const { limparLista } = require("./modules/stop/stop")
 require('dotenv').config()
 
 const { MessageEmbed } = require('discord.js');
