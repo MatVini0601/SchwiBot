@@ -2,16 +2,16 @@ const Discord = require('discord.js');
 const client = new Discord.Client();
 const config = require('./config.json');
 const { FindMessages } = require('./res/song')
-const { getLastMessage, getContextMessage, limparLista } = require('./modules/play/play')
+const { servers, getContextMessage, limparLista } = require('./modules/play/play')
 require('dotenv').config()
 
 const { MessageEmbed } = require('discord.js');
 const { commandQuery } = require('./modules/commandHandler/commandHandler');
-console.clear()
 
 client.on("ready",() =>{
 console.log(`Bot ativo com ${client.users.cache.size} usuarios em ${client.guilds.cache.size} servidores`);
 client.user.setActivity('No Game No Life Zero | s!help', {type: 'WATCHING'});
+console.clear()
 });
 
 client.on("message", async message => {
@@ -27,8 +27,8 @@ client.on("message", async message => {
 client.on('voiceStateUpdate', async (bot)  => {
     if(bot.id == '728993532303507556' && !bot.connection){
         let message = await getContextMessage()
-        let lastMessage = await getLastMessage()
-        await FindMessages(message, lastMessage)
+        const server = servers[message.guild.id]
+        await FindMessages(message, server.lastMessage)
         await limparLista()
     }
 })
