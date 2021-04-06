@@ -4,7 +4,10 @@ const { FindMessages,
         NoSongPlaying,
         StopDisconnect} = require("../../res/song")
 
+let msg = ''
+
 const stop = async (message) => {
+    msg = message
     const server = servers[message.guild.id]
     if(!server){ return }
     
@@ -22,13 +25,17 @@ const stop = async (message) => {
                 StopDisconnect(message);
                 FindMessages(message, server.lastMessage);
                 server.conexao[0].disconnect();
-                limparLista();
+                limparLista(message);
             }
         });
     }
 };
 
+const getContextMessage = async () => {
+    return msg
+}
+
 module.exports = { 
     stop,
-    limparLista
+    getContextMessage
 };

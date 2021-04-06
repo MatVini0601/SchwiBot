@@ -2,8 +2,8 @@ const Discord = require('discord.js');
 const client = new Discord.Client();
 const config = require('./config.json');
 const { FindMessages } = require('./res/song')
-const { servers, getContextMessage, limparLista } = require('./modules/play/play')
-//const { limparLista } = require("./modules/stop/stop")
+const { servers, limparLista } = require('./modules/play/play')
+const { getContextMessage } = require('./modules/stop/stop')
 require('dotenv').config()
 
 const { MessageEmbed } = require('discord.js');
@@ -30,7 +30,7 @@ client.on('voiceStateUpdate', async (bot)  => {
         let message = await getContextMessage()
         const server = servers[message.guild.id]
         await FindMessages(message, server.lastMessage)
-        await limparLista()
+        await limparLista(message)
     }
 })
 
