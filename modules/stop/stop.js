@@ -4,10 +4,9 @@ const { FindMessages,
         NoSongPlaying,
         StopDisconnect} = require("../../res/song")
 
-let msg = ''
+
 
 const stop = async (message) => {
-    msg = message
     const server = servers[message.guild.id]
     if(!server){ return }
     
@@ -22,20 +21,15 @@ const stop = async (message) => {
     }else{
         server.channelID.forEach(element => {
             if(element == message.member.voice.channelID){
-                StopDisconnect(message);
-                FindMessages(message, server.lastMessage);
+                StopDisconnect(server.message);
+                FindMessages(server.message, server.lastMessage);
+                limparLista(server.message);
                 server.conexao[0].disconnect();
-                limparLista(message);
             }
         });
     }
 };
 
-const getContextMessage = async () => {
-    return msg
-}
-
 module.exports = { 
     stop,
-    getContextMessage
 };

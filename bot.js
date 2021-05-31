@@ -1,18 +1,15 @@
 const Discord = require('discord.js');
 const client = new Discord.Client();
 const config = require('./config.json');
-const { FindMessages } = require('./res/song')
+const { FindMessages, LeftVoiceChannel } = require('./res/song')
 const { servers, limparLista } = require('./modules/play/play')
-const { getContextMessage } = require('./modules/stop/stop')
-require('dotenv').config()
-
 const { MessageEmbed } = require('discord.js');
 const { commandQuery } = require('./modules/commandHandler/commandHandler');
+require('dotenv').config()
 
 client.on("ready",() =>{
-console.log(`Bot ativo com ${client.users.cache.size} usuarios em ${client.guilds.cache.size} servidores`);
+console.log(`Bot ativo com ${client.users.cache.size} usuarios`);
 client.user.setActivity('No Game No Life Zero | s!help', {type: 'WATCHING'});
-console.clear()
 });
 
 client.on("message", async message => {
@@ -25,18 +22,35 @@ client.on("message", async message => {
     }
 });
 
-client.on('voiceStateUpdate', async (bot)  => {
-    if(bot.id == '728993532303507556' && !bot.connection){
-        let message = await getContextMessage()
-        const server = servers[message.guild.id]
-        await FindMessages(message, server.lastMessage)
-        await limparLista(message)
+client.on('voiceStateUpdate', async (oldMember)  => { 
+    if(!oldMember.channelID || oldMember == "undefined"){ return }
+    let bot = oldMember.guild.member(client.user)
+    if(oldMember.id != '728993532303507556' && oldMember.channelID && oldMember.channel.members.size == 1){
+        if(bot.voice.connection){
+            let server = servers[oldMember.guild.id]
+            LeftVoiceChannel(server.message)
+            await FindMessages(server.message, server.lastMessage)
+            await limparLista(server.message)
+            bot.voice.connection.disconnect()
+        }
+    }
+    if(oldMember.id == '728993532303507556' && oldMember.channel.members.size != 0 && !bot.voice.connection){
+        let guildID = oldMember.guild.id
+        let server = servers[guildID]
+        if(server.message.length == 0){ return }
+        else{
+            await FindMessages(server.message, server.lastMessage)
+            await limparLista(server.message)
+        }
     }
 })
 
 client.on('guildMemberAdd', member => {
     if(member.user.bot) return
-    const channel = member.guild.channels.cache.find(ch => ch.name === 'boas-vindas');
+    if(!member.guild.channels.cache.find(ch => ch.name === 'boas-vindas')){
+        member.guild.channels.create('boas-vindas',{type:"text"})
+    }
+    let channel = member.guild.channels.cache.find(ch => ch.name === 'boas-vindas');
 
     const WelcomeEmbed = new MessageEmbed()
         .setAuthor(`${client.user.username}`, client.user.avatarURL({size: 16, format:'jpg'}))

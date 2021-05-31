@@ -59,7 +59,7 @@ const StopDisconnect = async (message) => {
             .setColor("#e534eb")
             .setTitle("❌ Parando a música ❌")
             .addField("Desconectando...", "Até mais")
-    await message.channel.send(SongInfoEmbed)
+    await message[0].channel.send(SongInfoEmbed)
 }
 
 const AddToQueue = async (message, info) => {
@@ -95,13 +95,20 @@ const GenerateList = async (message, listInfo) => {
         await message.channel.send(queueList)
 }
 
+const LeftVoiceChannel = async (message) => {
+    const Embed = new MessageEmbed()
+        .setColor(`#e534eb`)
+        .addField(`Good Bye🖐`,'Ninguem na chamada, então Schwi saiu 😊')
+    await message[0].channel.send(Embed)
+}
+
 const FindMessages = async (message, Id) => {
     Id.forEach(async element => {
         try {
-            let msg = await message.channel.messages.fetch(element)
+            let msg = await message[0].channel.messages.fetch(element)
             msg.delete()
         } catch (error) {
-            message.channel.send("Não foi possível deletar as menssagens")
+            console.log('erro no fetch')
         }
     });
 }
@@ -132,5 +139,6 @@ module.exports = {
     NowPlaying,
     GetVideoDetails,
     NoQueue,
-    GenerateList
+    GenerateList,
+    LeftVoiceChannel
 }

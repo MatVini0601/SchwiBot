@@ -34,8 +34,6 @@ const execute = async (comando, args, module, message) => {
     });
 }
 
-
-
 const commandQuery = async (args, comando, message) => {
     var modules = await fs.readdir("modules")       
       modules.forEach(element => {

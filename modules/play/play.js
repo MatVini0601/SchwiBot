@@ -12,6 +12,7 @@ const { SongArgumentError,
 
 var servers = {}
 let Timeout;
+let msg = ''
 
 const play = async (args, message) => {
     const musica = args.pop();
@@ -20,39 +21,37 @@ const play = async (args, message) => {
         return youtube.validateURL(musica)
     }
 
-    const validatedSong = await ValidateSong(musica)
     if(!musica){ await SongArgumentError(message); return }
-    if(!validatedSong){ await NonValidateUrl(message); return }
+    if(!await ValidateSong(musica)){ await NonValidateUrl(message); return }
     if(!message.member.voice.channel){ await NotInVoiceChannel(message); return }
 
     if(!servers[message.guild.id]) servers[message.guild.id] = {
         queue: [],
         lastMessage: [],
         conexao: [],
-        channelID: []
+        channelID: [],
+        message: []
     }
     
     message.member.voice.channel.join().then(async function(connection){
         let channelID = message.member.voice.channelID
         connection.voice.setSelfDeaf(true)
+
+        if(!server.channelID.includes(channelID)){ server.channelID.push(channelID) }
         server.queue.push(await GetVideoDetails(musica))
         server.conexao.push(connection)
-        if(!server.channelID.includes(channelID)){ server.channelID.push(channelID) }
+        server.message.push(message)
         server.queue.length <= 1 ? tocar(connection, message) : AddToLista(message)
-        connectionParameter = connection
     })        
 
-   
     async function tocar(connection, message){
         clearTimeout(Timeout)
         const server = servers[message.guild.id]
-        
-        server.dispatcher = connection.play(youtube(server.queue[0].Url, {filter:'audioonly'}));
+        msg = message
+        server.dispatcher = await connection.play(youtube(server.queue[0].Url, {filter:'audioonly'}));
         let info = server.queue[0]
-
         try{await NowPlaying(message, info)}
         catch(error){console.log(error)}
-        
         server.lastMessage.push(message.channel.lastMessageID)
         
         server.dispatcher.on('finish', async function(){
@@ -60,14 +59,15 @@ const play = async (args, message) => {
             if(server.queue[0]){
                 try{await NextSong(message)}
                 catch(error){console.log(error)}
+
                 server.lastMessage.push(message.channel.lastMessageID)
                 tocar(connection, message)
             }else{
                 Timeout = setTimeout(async function (){ 
-                    FindMessages(message, server.lastMessage)
-                    limparLista(message)
+                    FindMessages(server.message, server.lastMessage)
                     Disconnect(message)
                     server.conexao[0].disconnect(); 
+                    limparLista(server.message)
                 }, 10000)
             }
         })   
@@ -83,15 +83,21 @@ const play = async (args, message) => {
 };
 
 const limparLista = async (message) => {
-    const server = servers[message.guild.id]
-    server.queue = []
-    server.lastMessage = []
-    server.channelID = []
+    let sv = servers[message[0].guild.id]
+    sv.queue = []
+    sv.lastMessage = []
+    sv.channelID = []
+    sv.message = []
+}
+
+const getContextMessage = async () => {
+    return msg
 }
 
 module.exports = {
     play,
     servers,
     client,
-    limparLista
+    limparLista,
+    getContextMessage
 }
