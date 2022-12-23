@@ -2,24 +2,21 @@ const Discord = require('discord.js');
 const client = new Discord.Client();
 const config = require('./config.json');
 const { FindMessages, LeftVoiceChannel } = require('./res/song')
-<<<<<<< Updated upstream
-const { servers, limparLista } = require('./modules/play/play')
-const { MessageEmbed } = require('discord.js');
-const { commandQuery } = require('./modules/commandHandler/commandHandler');
-require('dotenv').config()
-
-client.on("ready",() =>{
-=======
 const { servers, limparLista } = require('./modules/play')
 const { MessageEmbed } = require('discord.js');
 const { executeCommand, getModules } = require('./res/commandHandler');
+const { msToTime } = require('./res/utils')
 require('dotenv').config()
 
 client.on("ready", async () =>{
->>>>>>> Stashed changes
-console.log(`Bot ativo com ${client.users.cache.size} usuarios`);
-client.user.setActivity('No Game No Life Zero | s!help', {type: 'WATCHING'});
-await getModules()
+    // var StartTime = new Date()
+    console.log(`Bot ativo com ${client.users.cache.size} usuarios`);
+    client.user.setActivity(`No Game No Life Zero | s!help`, {type: 'WATCHING'});
+    await getModules()
+    // setInterval(() => {
+    //     var timeElapsed = new Date().getTime() - StartTime
+        
+    // }, 5000) // run every 1 second
 });
 
 // client.on("", async (oldPresence, newPresence) => {
