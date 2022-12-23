@@ -16,6 +16,6 @@
     "ffmpeg-binaries": "^3.2.2-3",
     "ffmpeg-static": "^4.3.0",
     "opusscript": "0.0.7",
-    "ytdl-core": "^4.5.0"
+    "ytdl-core": "^4.11.2"
   }
 }
