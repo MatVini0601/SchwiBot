@@ -26,7 +26,7 @@
     <h4>Boas Vindas</h4>
       <img width="492" alt="Captura de Tela 2023-01-11 às 16 07 00" src="https://user-images.githubusercontent.com/64799886/211896051-b6439400-fa93-4b02-b21d-35165a8fbde2.png">
     </div>
-    <p style="background-color: lightgray; display: block; height: 2px; margin-bottom: 10px;"></p>
+    <p style="background-color: lightgray; display: block; height: 2px;"></p>
     <div>
     <h4>Help</h4>
       <img width="361" alt="Captura de Tela 2023-01-11 às 16 41 46" src="https://user-images.githubusercontent.com/64799886/211902355-6c5cb1b9-9d7e-456f-a879-46600322d59d.png">
