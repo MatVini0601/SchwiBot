@@ -10,10 +10,10 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "@discordjs/opus": "^0.10.0",
+    "@distube/ytdl-core": "^4.16.12",
     "discord.js": "^12.2.0",
     "dotenv": "^8.2.0",
-    "ffmpeg-static": "^4.2.5",
-    "opusscript": "0.0.7",
-    "ytdl-core": "^4.5.0"
+    "ffmpeg-static": "^4.2.5"
   }
 }
